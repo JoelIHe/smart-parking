@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Parking PUCE</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background 0.8s; color: white; }
+        .LIBRE { background-color: #27ae60; } /* Verde */
+        .OCUPADO { background-color: #c0392b; } /* Rojo */
+        .card { background: rgba(0,0,0,0.2); padding: 40px; border-radius: 20px; text-align: center; backdrop-filter: blur(10px); }
+        h1 { font-size: 4rem; margin: 0; }
+        p { font-size: 1.5rem; opacity: 0.8; }
+    </style>
+</head>
+<body id="pantalla" class="LIBRE">
+    <div class="card">
+        <p>Estado del Parqueadero:</p>
+        <h1 id="estadoTexto">DISPONIBLE</h1>
+    </div>
+
+    <script>
+        // Conectamos con el servidor que creamos en VS Code
+        const socket = io("http://localhost:3000"); 
+        
+        socket.on("cambio_estado", (nuevoEstado) => {
+            const pantalla = document.getElementById("pantalla");
+            const texto = document.getElementById("estadoTexto");
+
+            if (nuevoEstado === "OCUPADO") {
+                pantalla.className = "OCUPADO";
+                texto.innerText = "BLOQUEADO";
+            } else {
+                pantalla.className = "LIBRE";
+                texto.innerText = "DISPONIBLE";
+            }
+        });
+    </script>
+</body>
+</html>
