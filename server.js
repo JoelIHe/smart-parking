@@ -16,10 +16,14 @@ const io = new Server(server, {
 // --- CONFIGURACIÓN DE BASE DE DATOS ---
 const mongoURI = "mongodb+srv://admin:Joeltupiza12@cluster0.oni6x4u.mongodb.net/SmartParking?retryWrites=true&w=majority&appName=Cluster0";
 
-// --- NUEVO: FUNCIÓN PARA RECUPERAR MEMORIA ---
+// --- LA MEMORIA VOLÁTIL Y EL WATCHDOG ---
+let ultimoEstado = "LIBRE"; 
+let ultimaVezVisto = Date.now(); // <-- Guardamos la hora exacta en que el servidor inicia
+const TIEMPO_MAXIMO_SIN_SENSOR = 3 * 60 * 1000; // 3 minutos en milisegundos
+
+// --- FUNCIÓN PARA RECUPERAR MEMORIA ---
 const sincronizarMemoria = async () => {
     try {
-        // Buscamos el último registro en la base de datos ordenado por fecha descendente
         const ultimoRegistro = await Historial.findOne().sort({ fecha: -1 });
         if (ultimoRegistro) {
             ultimoEstado = ultimoRegistro.estado;
@@ -35,7 +39,7 @@ const sincronizarMemoria = async () => {
 mongoose.connect(mongoURI)
     .then(() => {
         console.log("✅ Conexión exitosa a MongoDB Atlas");
-        sincronizarMemoria(); // <--- Llamamos a la sincronización justo al conectar
+        sincronizarMemoria(); 
     })
     .catch(err => console.error("❌ Error conectando a MongoDB:", err));
 
@@ -46,10 +50,8 @@ const HistorialSchema = new mongoose.Schema({
 });
 const Historial = mongoose.model('Historial', HistorialSchema);
 
-// --- LA MEMORIA VOLÁTIL ---
-let ultimoEstado = "LIBRE"; 
 
-// 1. GET: El Front (Vue) lo usa al cargar o refrescar
+// 1. GET: El Front (Vue/React Native) lo usa al cargar o refrescar
 app.get('/api/estado', (req, res) => {
     res.json({ estado: ultimoEstado });
 });
@@ -59,6 +61,8 @@ app.post('/api/estado', async (req, res) => {
     const { estado } = req.body; 
     
     ultimoEstado = estado; 
+    ultimaVezVisto = Date.now(); // <-- EL SENSOR RESPIRÓ, ACTUALIZAMOS LA HORA
+    
     console.log(`📡 Sensor reporta: ${estado}`);
 
     try {
@@ -75,7 +79,31 @@ app.post('/api/estado', async (req, res) => {
     }
 });
 
+// --- EL WATCHDOG (PERRO GUARDIÁN) ---
+// Se ejecuta solito cada 1 minuto para revisar si el sensor sigue vivo
+setInterval(async () => {
+    const tiempoSinRespuesta = Date.now() - ultimaVezVisto;
+    
+    // Si pasaron más de 3 minutos y no estaba ya desconectado
+    if (tiempoSinRespuesta > TIEMPO_MAXIMO_SIN_SENSOR && ultimoEstado !== "DESCONECTADO") {
+        console.log("🚨 ALARMA: Sensor desconectado o sin WiFi. Cambiando estado...");
+        ultimoEstado = "DESCONECTADO";
+        
+        // Avisar a todas las apps conectadas (Vue y React Native)
+        io.emit('cambio_estado', ultimoEstado);
+        
+        // Guardar la falla en MongoDB para tener el registro de a qué hora se fue el internet
+        try {
+            const registroFalla = new Historial({ estado: ultimoEstado });
+            await registroFalla.save();
+            console.log("💾 Registro de desconexión guardado en la base de datos");
+        } catch (error) {
+            console.error("❌ Error al guardar el estado de desconexión:", error);
+        }
+    }
+}, 60000); // 60000 ms = 1 minuto
+
 const PORT = process.env.PORT || 10000; 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor con BDD listo en el puerto ${PORT}`);
+    console.log(`🚀 Servidor con BDD y Watchdog listo en el puerto ${PORT}`);
 });
