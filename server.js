@@ -15,6 +15,8 @@ const cors = require('cors');
 
 const conectarDB = require('./config/db');
 const estadoRoutes = require('./routes/estado');
+const usuariosRoutes = require('./routes/usuarios');
+const layoutRoutes = require('./routes/layout');
 const iniciarWatchdog = require('./services/watchdog');
 
 const app = express();
@@ -34,6 +36,8 @@ conectarDB();
 
 // --- RUTAS DE LA API ---
 app.use(estadoRoutes);
+app.use(usuariosRoutes);
+app.use(layoutRoutes);
 
 // --- WATCHDOG DEL SENSOR ---
 iniciarWatchdog(io);
