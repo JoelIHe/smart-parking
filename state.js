@@ -8,9 +8,9 @@
 // acceden al MISMO objeto en memoria.
 // ============================================
 
-const state = {
-    ultimoEstado: "LIBRE",
-    ultimaVezVisto: Date.now()
+// Diccionario global de sensores activos almacenados temporalmente en memoria (RAM rápida)
+// Estructura:
+// { "MAC_ADDRESS": { ultimoEstado: 'LIBRE', ultimaVezVisto: Date.now() } }
+module.exports = {
+    sensores: {}
 };
-
-module.exports = state;

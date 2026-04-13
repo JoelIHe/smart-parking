@@ -14,26 +14,34 @@ const TIEMPO_MAXIMO_SIN_SENSOR = 3 * 60 * 1000; // 3 minutos en milisegundos
 
 const iniciarWatchdog = (io) => {
     setInterval(async () => {
-        const tiempoSinRespuesta = Date.now() - state.ultimaVezVisto;
+        const ahora = Date.now();
+        const macs = Object.keys(state.sensores);
 
-        // Si pasaron más de 3 minutos y no estaba ya desconectado
-        if (tiempoSinRespuesta > TIEMPO_MAXIMO_SIN_SENSOR && state.ultimoEstado !== "DESCONECTADO") {
-            console.log("🚨 ALARMA: Sensor desconectado o sin WiFi. Cambiando estado...");
-            state.ultimoEstado = "DESCONECTADO";
+        for (const mac of macs) {
+            const sensorData = state.sensores[mac];
+            const tiempoSinRespuesta = ahora - sensorData.ultimaVezVisto;
 
-            // Avisar a todas las apps conectadas (Vue y React Native)
-            io.emit('cambio_estado', state.ultimoEstado);
+            if (tiempoSinRespuesta > TIEMPO_MAXIMO_SIN_SENSOR && sensorData.ultimoEstado !== "DESCONECTADO") {
+                console.log(`🚨 ALARMA: Sensor [${mac}] desconectado o sin WiFi. Cambiando estado...`);
+                sensorData.ultimoEstado = "DESCONECTADO";
 
-            // Guardar la falla en MongoDB para tener el registro de a qué hora se fue el internet
-            try {
-                const registroFalla = new Historial({ estado: state.ultimoEstado });
-                await registroFalla.save();
-                console.log("💾 Registro de desconexión guardado en la base de datos");
-            } catch (error) {
-                console.error("❌ Error al guardar el estado de desconexión:", error);
+                // Avisar app
+                io.emit('cambio_estado', { mac: mac, estado: "DESCONECTADO" });
+
+                try {
+                    // Update Sensor collection as well
+                    const Sensor = require('../models/Sensor');
+                    await Sensor.findOneAndUpdate({ mac: mac }, { ultimoEstado: 'DESCONECTADO' });
+
+                    // Log in Historial
+                    const registroFalla = new Historial({ estado: "DESCONECTADO" });
+                    await registroFalla.save();
+                } catch (error) {
+                    console.error(`❌ Error al guardar watchdog para [${mac}]:`, error);
+                }
             }
         }
-    }, 60000); // 60000 ms = 1 minuto
+    }, 60000); // Revisión cada minuto
 };
 
 module.exports = iniciarWatchdog;

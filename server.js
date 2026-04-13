@@ -17,6 +17,7 @@ const conectarDB = require('./config/db');
 const estadoRoutes = require('./routes/estado');
 const usuariosRoutes = require('./routes/usuarios');
 const layoutRoutes = require('./routes/layout');
+const sensoresRoutes = require('./routes/sensores');
 const iniciarWatchdog = require('./services/watchdog');
 
 const app = express();
@@ -38,6 +39,7 @@ conectarDB();
 app.use(estadoRoutes);
 app.use(usuariosRoutes);
 app.use(layoutRoutes);
+app.use(sensoresRoutes);
 
 // --- WATCHDOG DEL SENSOR ---
 iniciarWatchdog(io);
