@@ -13,24 +13,44 @@ router.get('/api/layouts', async (req, res) => {
     }
 });
 
-// Obtener UN layout específico o el más reciente por defecto
-router.get('/api/layout/:id?', async (req, res) => {
+// Obtener UN layout específico
+router.get('/api/layout/:id', async (req, res) => {
     try {
         const isLite = req.query.lite === 'true';
-        let query = req.params.id ? MapLayout.findById(req.params.id) : MapLayout.findOne().sort({ createdAt: -1 });
+        let query = MapLayout.findById(req.params.id);
         
         if (isLite) {
             query = query.select('-mapImageBase64');
         }
 
         const layout = await query;
-        
         if (!layout) {
             return res.json({ name: "Nuevo Mapa", puestos: [] });
         }
         res.json(layout);
     } catch (error) {
-        console.error('Error fetching layout:', error);
+        console.error('Error fetching layout by id:', error);
+        res.status(500).json({ error: 'Error del servidor obteniendo layout' });
+    }
+});
+
+// Obtener el layout más reciente por defecto
+router.get('/api/layout', async (req, res) => {
+    try {
+        const isLite = req.query.lite === 'true';
+        let query = MapLayout.findOne().sort({ createdAt: -1 });
+        
+        if (isLite) {
+            query = query.select('-mapImageBase64');
+        }
+
+        const layout = await query;
+        if (!layout) {
+            return res.json({ name: "Nuevo Mapa", puestos: [] });
+        }
+        res.json(layout);
+    } catch (error) {
+        console.error('Error fetching layout default:', error);
         res.status(500).json({ error: 'Error del servidor obteniendo layout' });
     }
 });
