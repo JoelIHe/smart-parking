@@ -6,6 +6,8 @@ const mapLayoutSchema = new mongoose.Schema({
         id: String,
         top: String,
         left: String,
+        width: String,
+        height: String,
         rotacion: String
     }]
 }, { timestamps: true });
