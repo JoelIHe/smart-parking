@@ -16,12 +16,14 @@ router.get('/api/layouts', async (req, res) => {
 // Obtener UN layout específico o el más reciente por defecto
 router.get('/api/layout/:id?', async (req, res) => {
     try {
-        let layout;
-        if (req.params.id) {
-            layout = await MapLayout.findById(req.params.id);
-        } else {
-            layout = await MapLayout.findOne().sort({ createdAt: -1 });
+        const isLite = req.query.lite === 'true';
+        let query = req.params.id ? MapLayout.findById(req.params.id) : MapLayout.findOne().sort({ createdAt: -1 });
+        
+        if (isLite) {
+            query = query.select('-mapImageBase64');
         }
+
+        const layout = await query;
         
         if (!layout) {
             return res.json({ name: "Nuevo Mapa", puestos: [] });
