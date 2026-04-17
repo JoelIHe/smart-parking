@@ -13,4 +13,16 @@ router.get('/api/sensores', async (req, res) => {
     }
 });
 
+// DELETE /api/sensores/:mac -> Eliminar sensor físico de la BD
+router.delete('/api/sensores/:mac', async (req, res) => {
+    try {
+        const result = await Sensor.findOneAndDelete({ mac: req.params.mac });
+        if (!result) return res.status(404).json({ error: 'Sensor no encontrado' });
+        res.json({ message: 'Sensor eliminado correctamente' });
+    } catch (error) {
+        console.error("Error eliminando sensor:", error);
+        res.status(500).json({ error: 'Error del servidor al eliminar' });
+    }
+});
+
 module.exports = router;
