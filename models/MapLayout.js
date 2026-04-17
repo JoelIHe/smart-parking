@@ -8,6 +8,7 @@ const mapLayoutSchema = new mongoose.Schema({
     imageHeight: { type: Number, default: 2550 },
     puestos: [{
         id: String,
+        label: String,
         top: String,
         left: String,
         width: String,
