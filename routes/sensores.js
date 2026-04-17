@@ -13,17 +13,18 @@ router.get('/api/sensores', async (req, res) => {
     }
 });
 
-// DELETE /api/sensor/:mac -> Elimina un sensor físico del inventario
-router.delete('/api/sensor/:mac', async (req, res) => {
+// DELETE /api/sensores/:mac -> Elimina un sensor del inventario
+router.delete('/api/sensores/:mac', async (req, res) => {
     try {
-        const result = await Sensor.findOneAndDelete({ mac: req.params.mac });
+        const { mac } = req.params;
+        const result = await Sensor.findOneAndDelete({ mac });
         if (!result) {
-            return res.status(404).json({ error: 'Sensor no encontrado' });
+            return res.status(404).json({ error: 'Sensor no encontrado en el inventario' });
         }
         res.json({ message: 'Sensor eliminado correctamente' });
     } catch (error) {
         console.error("Error eliminando sensor:", error);
-        res.status(500).json({ error: 'Error del servidor al eliminar sensor' });
+        res.status(500).json({ error: 'Error interno al intentar eliminar el sensor' });
     }
 });
 
