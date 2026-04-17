@@ -5,7 +5,7 @@ const MapLayout = require('../models/MapLayout');
 // Obtener TODOS los layouts (solo metadatos para listado rápido)
 router.get('/api/layouts', async (req, res) => {
     try {
-        const layouts = await MapLayout.find().select('_id name updatedAt');
+        const layouts = await MapLayout.find().select('_id name puestos updatedAt');
         res.json(layouts);
     } catch (error) {
         console.error('Error fetching layouts:', error);
