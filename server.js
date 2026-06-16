@@ -19,6 +19,7 @@ const usuariosRoutes = require('./routes/usuarios');
 const layoutRoutes = require('./routes/layout');
 const sensoresRoutes = require('./routes/sensores');
 const guestConfigRoutes = require('./routes/guest-config');
+const systemStatusRoutes = require('./routes/system-status');
 const iniciarWatchdog = require('./services/watchdog');
 
 const app = express();
@@ -43,6 +44,7 @@ app.use(usuariosRoutes);
 app.use(layoutRoutes);
 app.use(sensoresRoutes);
 app.use(guestConfigRoutes);
+app.use(systemStatusRoutes);
 
 // --- WATCHDOG DEL SENSOR ---
 iniciarWatchdog(io);
