@@ -10,7 +10,7 @@
 const Historial = require('../models/Historial');
 const state = require('../state');
 
-const TIEMPO_MAXIMO_SIN_SENSOR = 3 * 60 * 1000; // 3 minutos en milisegundos
+const TIEMPO_MAXIMO_SIN_SENSOR = 5 * 60 * 1000; // 5 minutos en milisegundos (heartbeat del ESP32 es cada 2min)
 
 const iniciarWatchdog = (io) => {
     setInterval(async () => {
