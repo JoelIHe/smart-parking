@@ -49,6 +49,21 @@ app.use(systemStatusRoutes);
 // --- WATCHDOG DEL SENSOR ---
 iniciarWatchdog(io);
 
+// --- KEEP-ALIVE: Evitar que Render (free tier) duerma ---
+// Render duerme el servidor si no hay tráfico HTTP en ~15 min.
+// Esto lo auto-pingea cada 10 minutos para mantenerlo despierto,
+// garantizando que el ESP32 siempre pueda conectarse.
+const https = require('https');
+const SELF_URL = 'https://smart-parking-9cay.onrender.com/api/estado';
+setInterval(() => {
+    https.get(SELF_URL, (res) => {
+        console.log(`🏓 Keep-alive ping → HTTP ${res.statusCode}`);
+        res.resume(); // Consume la respuesta para liberar memoria
+    }).on('error', (err) => {
+        console.warn(`⚠️  Keep-alive falló: ${err.message}`);
+    });
+}, 10 * 60 * 1000); // cada 10 minutos
+
 // --- ARRANCAR SERVIDOR ---
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, '0.0.0.0', () => {
