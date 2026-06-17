@@ -18,7 +18,13 @@ router.get('/api/estado', async (req, res) => {
         if (Object.keys(state.sensores).length === 0) {
             const sensoresMongo = await Sensor.find();
             sensoresMongo.forEach(s => {
-                state.sensores[s.mac] = { ultimoEstado: s.ultimoEstado, ultimaVezVisto: s.ultimaVezVisto };
+                // Si el sensor estaba activo (LIBRE/OCUPADO), usamos Date.now() como ultimaVezVisto
+                // para que el watchdog le dé los 3 minutos de gracia y no lo marque
+                // DESCONECTADO inmediatamente al reiniciar el servidor.
+                const ultimaVezVisto = (s.ultimoEstado !== 'DESCONECTADO')
+                    ? Date.now()
+                    : new Date(s.ultimaVezVisto).getTime();
+                state.sensores[s.mac] = { ultimoEstado: s.ultimoEstado, ultimaVezVisto };
             });
         }
         res.json({ sensores: state.sensores });
